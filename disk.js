@@ -11,9 +11,9 @@ async function upload(token,path,blob){const link=await diskRequest(token,'/uplo
 export async function uploadEntry(token,profile,entry){
  const folder=packetFolder(entry.period,entry.category,entry.kind),path=profile.root+'/'+folder;
  await directory(token,path);
- const files=[];
- for(const [index,file]of entry.files.entries()){const extension=file.type==='image/png'?'png':file.type==='application/pdf'?'pdf':'jpg',name=entry.id+'-'+(index+1)+'.'+extension;await upload(token,path+'/'+name,file);files.push(name);}
+ const files=[],processed=[];
+ for(const [index,file]of entry.files.entries()){const extension=file.type==='image/png'?'png':file.type==='application/pdf'?'pdf':'jpg',name=entry.id+'-'+(index+1)+'.'+extension;await upload(token,path+'/'+name,file);files.push(name);const copy=entry.processed?.[index];if(copy){const copyName=entry.id+'-'+(index+1)+'-processed.png';await upload(token,path+'/'+copyName,copy);processed.push(copyName);}else processed.push(null);}
  // Publish metadata last. The desktop never imports an incomplete upload.
- await upload(token,path+'/flamingo-'+entry.id+'.json',new Blob([JSON.stringify({version:1,id:entry.id,period:entry.period,category:entry.category,kind:entry.kind,files,createdAt:entry.createdAt})],{type:'application/json'}));
+ await upload(token,path+'/flamingo-'+entry.id+'.json',new Blob([JSON.stringify({version:1,id:entry.id,period:entry.period,category:entry.category,kind:entry.kind,files,processed,createdAt:entry.createdAt})],{type:'application/json'}));
  return folder;
 }
